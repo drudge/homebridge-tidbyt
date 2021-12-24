@@ -1,0 +1,57 @@
+{
+  "displayName": "Tidbyt",
+  "name": "homebridge-tidbyt",
+  "version": "0.3.8",
+  "description": "Homebridge plugin that adds support for Tidbyt devices.",
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Nicholas Penree",
+    "email": "nick@penree.com",
+    "url": "https://www.penree.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/drudge/homebridge-tidbyt.git"
+  },
+  "bugs": {
+    "url": "https://github.com/drudge/homebridge-tidbyt/issues"
+  },
+  "engines": {
+    "node": ">=10.17.0",
+    "homebridge": ">=1.3.0"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "lint": "eslint src/**.ts",
+    "watch": "npm run build && npm link && nodemon",
+    "build": "rimraf ./dist && tsc",
+    "prepublishOnly": "npm run lint && npm run build"
+  },
+  "keywords": [
+    "homebridge-plugin",
+    "HomeKit",
+    "homebridge-tidbyt",
+    "tidbyt",
+    "display",
+    "rgb",
+    "matrix",
+    "pixlet"
+  ],
+  "dependencies": {
+    "bottleneck": "^2.19.5",
+    "got": "^11.6.0",
+    "node-schedule": "^2.1.0",
+    "once": "^1.4.0",
+    "tidbyt": "^0.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^14.6.3",
+    "@typescript-eslint/eslint-plugin": "^4.0.1",
+    "@typescript-eslint/parser": "^4.0.1",
+    "eslint": "^7.8.1",
+    "homebridge": "^1.3.8",
+    "rimraf": "^3.0.2",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.2"
+  }
+}

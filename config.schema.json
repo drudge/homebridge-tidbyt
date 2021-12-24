@@ -1,0 +1,203 @@
+{
+  "headerDisplay": "To use this plugin, you'll need your device ID and an API key. Open the settings for the device in the Tidbyt app on your phone, and tap <strong>Get API key</strong>.",
+  "pluginAlias": "Tidbyt",
+  "pluginType": "platform",
+  "singular": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "authToken": {
+        "title": "Auth Token",
+        "type": "string",
+        "required": true
+      },
+      "discoverFrequency": {
+        "title": "Update Frequency (ms)",
+        "type": "number",
+        "required": true,
+        "default": 60000
+      },
+      "managedDevices": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "required": true
+            }
+          }
+        }
+      },
+      "customApps": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "enabled": {
+              "type": "boolean",
+              "required": true,
+              "default": true
+            },
+            "updateOnStartup": {
+              "type": "boolean",
+              "default": true
+            },
+            "script": {
+              "type": "string",
+              "required": true
+            },
+            "schedule": {
+              "type": "string"
+            },
+            "config": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "required": true
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "layout": [
+    {
+      "type": "fieldset",
+      "notitle": true,
+      "items": [
+        {
+          "title": "Auth Token",
+          "key": "authToken"
+        },
+        {
+          "title": "Discover Frequency (ms)",
+          "key": "discoverFrequency"
+        }
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "Devices",
+      "expandable": true,
+      "expanded": true,
+      "items": [
+        {
+          "title": "Device",
+          "key": "managedDevices",
+          "type": "array",
+          "notitle": true,
+          "items": [
+            {
+              "type": "div",
+              "items": [
+                {
+                  "key": "managedDevices[].id",
+                  "title": "Device ID",
+                  "default": "snarky-device-id-here"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "Custom Apps",
+      "expandable": true,
+      "expanded": false,
+      "items": [
+        {
+          "key": "customApps",
+          "title": "App",
+          "type": "array",
+          "description": "Pushing an applet to your Tidbyt without an installation ID treats your applet as transient. Transient applets are not added to the rotation and will only be displayed a single time.",
+          "notitle": true,
+          "items": [
+            {
+              "title": "App",
+              "type": "div",
+              "notitle": true,
+              "flex-flow": "row wrap",
+              "items": [
+                {
+                  "key": "customApps[].id",
+                  "title": "Installation ID",
+                  "description": "If you would like your applet to continously display as part of the rotation, set an installation ID here. Must be unique. If left blank, the applet will be treated as transient.",
+                  "flex": "1 1 50%"
+                },
+                {
+                  "key": "customApps[].schedule",
+                  "title": "Cron Schedule",
+                  "flex": "1 1 50%"
+                },
+                {
+                  "key": "customApps[].script",
+                  "title": "Render Script (.star)",
+                  "flex": "1 1 100%"
+                },
+                {
+                  "key": "customApps[].enabled",
+                  "title": "Enabled",
+                  "default": true,
+                  "flex": "1 1 100%",
+                  "description": "When enabled, the applet will be pushed to the device using the Cron schedule or on startup if configured below.\nIf disabled, any installations will be removed from the rotation and the app will not run."
+                },
+                {
+                  "key": "customApps[].updateOnStartup",
+                  "title": "Refresh on Startup",
+                  "default": true,
+                  "flex": "1 1 100%",
+                  "description": "When enabled, the applet will be refreshed and pushed to your Tidbyt immediately upon Homebridge startup."
+                },
+                {
+                  "type": "section",
+                  "title": "Config",
+                  "expandable": true,
+                  "expanded": false,
+                  "items": [
+                    {
+                      "title": "Parameter",
+                      "type": "array",
+                      "notitle": true,
+                      "description": "Any configuration parameters will be passed to the pixlet render command.",
+                      "items": [
+                        {
+                          "type": "flex",
+                          "flex-flow": "row wrap",
+                          "items": [
+                            {
+                              "key": "customApps[].config[].key",
+                              "title": "Key"
+                            },
+                            {
+                              "key": "customApps[].config[].value",
+                              "title": "Value"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
