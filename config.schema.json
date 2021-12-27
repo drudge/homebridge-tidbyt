@@ -53,6 +53,9 @@
             "schedule": {
               "type": "string"
             },
+            "configScript": {
+              "type": "string"
+            },
             "config": {
               "type": "array",
               "items": {
@@ -162,6 +165,12 @@
                   "default": true,
                   "flex": "1 1 100%",
                   "description": "When enabled, the applet will be refreshed and pushed to your Tidbyt immediately upon Homebridge startup."
+                },
+                {
+                  "key": "customApps[].configScript",
+                  "title": "Config Script (.js)",
+                  "flex": "1 1 100%",
+                  "description": "Config scripts allow you to fetch configuration values for your scripts using Node.js modules. When the applet is rendered, the config values will be fetched using the promise returned by the module specified here."
                 },
                 {
                   "type": "section",

@@ -1,7 +1,7 @@
 {
-  "displayName": "Tidbyt",
   "name": "homebridge-tidbyt",
-  "version": "0.3.8",
+  "displayName": "Tidbyt",
+  "version": "0.4.1",
   "description": "Homebridge plugin that adds support for Tidbyt devices.",
   "license": "Apache-2.0",
   "author": {
@@ -42,7 +42,8 @@
     "got": "^11.6.0",
     "node-schedule": "^2.1.0",
     "once": "^1.4.0",
-    "tidbyt": "^0.2.0"
+    "tidbyt": "^0.2.0",
+    "which": "^2.0.2"
   },
   "devDependencies": {
     "@types/node": "^14.6.3",

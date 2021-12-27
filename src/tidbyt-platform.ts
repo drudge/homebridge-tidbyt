@@ -15,6 +15,7 @@ import {
 import Tidbyt from 'tidbyt';
 import scheduler from 'node-schedule';
 import Bottleneck from 'bottleneck';
+import which from 'which';
 
 import {
   PLATFORM_NAME,
@@ -41,6 +42,8 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
   
   public readonly tidbyt: Tidbyt;
   private updating = false;
+  private pixletBinPath?: string;
+  private pollingTimer?: NodeJS.Timeout;
 
   constructor(
     public readonly log: Logger,
@@ -49,6 +52,11 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
   ) {
     process.on('uncaughtException', (err) => {
       this.log.error(err.stack || err.message);
+    });
+    process.on('SIGINT', async () => {
+      this.log.info('SIGINT received, shutting down schedules');
+      await scheduler.gracefulShutdown();
+      process.exit(0);
     });
 
     // We can't start without being configured.
@@ -70,22 +78,46 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
   }
 
   async init() {
-    const { discoverFrequency = 60000 } = this.config;
-
-    this.log.debug('Update Frequency: %i ms', discoverFrequency);
+    // Make sure cache directory exists
+    await this.setupCache();
 
     // Refresh devices
     await this.updateDevices();
 
-    // Make sure cache directory exists
-    await this.setupCache();
+    try {
+      this.pixletBinPath = await which('pixlet');
+    } catch (error) {
+      this.log.error('Could not locate the pixlet CLI. Make sure it is installed and in your PATH.');
+    }
+
     // Load custom apps from config and schedule/start them
-    await this.handleCustomApps();
+    if (this.pixletBinPath) {
+      await this.handleCustomApps();
+    } else {
+      this.log.info('Pixlet not detected. Custom apps will not be loaded.');
+    }
 
     // Schedule future updates
-    setInterval(async () => this.updateDevices(), discoverFrequency);
+    this.scheduleNextUpdate();
   }
 
+  scheduleNextUpdate() {
+    const { discoverFrequency = 60000 } = this.config;
+
+    this.log.debug('Update Frequency: %i ms', discoverFrequency);
+
+    this.cancelNextUpdate();
+
+    if (discoverFrequency > 0) {
+      this.pollingTimer = setTimeout(async () => this.updateDevices(), discoverFrequency);
+    }
+  }
+
+  cancelNextUpdate() {
+    if (this.pollingTimer) {
+      clearTimeout(this.pollingTimer);
+    }
+  }
   
   /**
    * This function is invoked when homebridge restores cached accessories from disk at startup.
@@ -128,9 +160,7 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
           config = [],
           schedule,
           updateOnStartup = true,
-          fetch = async () => {
-            return config;
-          },
+          configScript,
         } = customApp;
         const label = id || '-transient-';
 
@@ -150,6 +180,24 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
           continue;
         }
 
+        let fetch;
+        let configScriptLoaded = false;
+
+        if (configScript) {
+          try {
+            this.log.info(`[${label}] Config Script: ${configScript}`);
+            fetch = require(configScript);
+            configScriptLoaded = true;
+          } catch (error) {
+            this.log.error(`Failed to load dynamic config script: ${error.message}`);
+          }
+        }
+
+        if (!fetch) {
+          fetch = async () => config;
+          configScriptLoaded = false;
+        }
+        
         let first = true;
         const invoke = async () => {
           if (!first) {
@@ -159,6 +207,9 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
           this.log.debug(`[${label}] Fetching...`);
           let image;
           try {
+            if (configScriptLoaded) {
+              this.log.debug(`[${label}] Fetching config via ${configScript}...`);
+            }
             customApp.config = await fetch(config);
             this.log.info(`[${label}] Rendering: ${script} ${customApp.config.map(({key, value}) => `${key}=${value}`).join(' ')}`);
             image = await this.renderPixlet(script, customApp.config);
@@ -196,8 +247,11 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
     const renderedFileName = join(CACHE_DIR, `${baseFilename}.webp`);
 
     return new Promise((resolve, reject) => {
+      if (!this.pixletBinPath) {
+        return reject(new Error('Pixlet CLI not found'));
+      }
       const keyValuePairs = context.map(({ key, value }) => `${key}=${value || ''}`);
-      const pixlet = spawn('pixlet', [
+      const pixlet = spawn(this.pixletBinPath, [
         'render',
         fileName,
         ...keyValuePairs,
@@ -268,6 +322,8 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
     }
 
     this.updating = false;
+    
+    this.scheduleNextUpdate();
   }
 
 }
