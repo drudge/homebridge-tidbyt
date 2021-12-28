@@ -90,6 +90,10 @@ And the final result on the Tidbyt:
 
   ![](https://github.com/mackorone/tidbyt-nyan-cat/raw/main/nyan_cat.gif)
 
+* [Bouncing DVD Logo](https://github.com/mackorone/tidbyt-bouncing-dvd-logo) by mackorone
+
+  ![](https://github.com/mackorone/tidbyt-bouncing-dvd-logo/raw/main/bouncing_dvd_logo.gif)
+
 * [Hacker News](https://github.com/mackorone/tidbyt-hacker-news) by mackorone
 
   ![](https://github.com/mackorone/tidbyt-hacker-news/raw/main/hacker_news.gif)
@@ -101,6 +105,8 @@ And the final result on the Tidbyt:
 * [Big Retro Clock](https://github.com/joeyhoer/tidbyt-apps/blob/master/big_clock.star) by joeyhoer
 
   ![](images/big_clock.gif)
+
+You can find more cool applets on [Github](https://github.com/topics/tidbyt) and the [Tidbyt Community forums](https://discuss.tidbyt.com/c/developers/8).
 
 ## Contributing
 
