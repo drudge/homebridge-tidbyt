@@ -71,6 +71,37 @@ This can also be configured manually in the config.json like this:
 And the final result on the Tidbyt:
 
 ![](images/twitter_followers.jpg)
+
+#### More apps to try!
+
+* [Pacman Clock](https://github.com/savetz/tidbyt-sprite-demo#pac-man-clock) by savetz
+
+  ![](https://github.com/savetz/tidbyt-sprite-demo/raw/main/pacmandemo.gif)
+
+* [3-Frame Animation with Parallax](https://github.com/savetz/tidbyt-sprite-demo) by savetz
+
+  ![](https://github.com/savetz/tidbyt-sprite-demo/raw/main/parallaxdemo.gif) 
+
+* [Pokedex](https://github.com/mackorone/tidbyt-pokedex) by mackorone
+
+  ![](https://github.com/mackorone/tidbyt-pokedex/raw/main/pokedex.png)
+
+* [Nyan Cat](https://github.com/mackorone/tidbyt-nyan-cat) by mackorone
+
+  ![](https://github.com/mackorone/tidbyt-nyan-cat/raw/main/nyan_cat.gif)
+
+* [Hacker News](https://github.com/mackorone/tidbyt-hacker-news) by mackorone
+
+  ![](https://github.com/mackorone/tidbyt-hacker-news/raw/main/hacker_news.gif)
+
+* [Word of the Day](https://github.com/mackorone/tidbyt-word-of-the-day) by mackorone
+
+  ![](https://github.com/mackorone/tidbyt-word-of-the-day/raw/main/word_of_the_day.gif)
+
+* [Big Retro Clock](https://github.com/joeyhoer/tidbyt-apps/blob/master/big_clock.star) by joeyhoer
+
+  ![](images/big_clock.gif)
+
 ## Contributing
 
 This project should be use in conjunction with the [developer documentation](https://developers.homebridge.io/). A full list of all supported service types, and their characteristics is available on this site.
