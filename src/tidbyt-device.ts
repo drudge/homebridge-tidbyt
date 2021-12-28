@@ -119,7 +119,9 @@ export class TidbytDeviceHandler {
       // this.infoService.getCharacteristic(this.Characteristic.FirmwareRevision).updateValue(this.status.FirmwareVersion);
 
     } catch (err) {
-      this.log.error('Could not update status: %s', err.stack || err.message);
+      if (err instanceof Error) {
+        this.log.error('Could not update status: %s', err.stack || err.message);
+      }
     }
   }
 }

@@ -29,6 +29,10 @@ const updateLimiter = new Bottleneck({
   minTime: 1500,
 });
 
+interface FsError extends Error {
+  code?: string;
+}
+
 /**
  * TidbytPlatform
  * This class is the main constructor for the plugin, this is where you should
@@ -134,7 +138,7 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
     try {
       await fs.promises.mkdir(CACHE_DIR, { recursive: true });
     } catch (error) {
-      if (error.code === 'EEXIST') {
+      if ((error as FsError).code === 'EEXIST') {
         const lstat = await fs.promises.lstat(CACHE_DIR);
         if (!lstat.isDirectory()) {
           throw error;
@@ -172,7 +176,7 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
             try {
               await device.installations.delete(id);
             } catch (e) {
-              if (!e.message.includes('installation not found')) {
+              if (e instanceof Error && !e.message.includes('installation not found')) {
                 this.log.error(`Failed to remove installation ${id}: ${e.message}`);
               }
             }
@@ -189,7 +193,9 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
             fetch = require(configScript);
             configScriptLoaded = true;
           } catch (error) {
-            this.log.error(`Failed to load dynamic config script: ${error.message}`);
+            if (error instanceof Error) {
+              this.log.error(`Failed to load dynamic config script: ${error.message}`);
+            }
           }
         }
 
@@ -214,7 +220,9 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
             this.log.info(`[${label}] Rendering: ${script} ${customApp.config.map(({key, value}) => `${key}=${value}`).join(' ')}`);
             image = await this.renderPixlet(script, customApp.config);
           } catch (e) {
-            this.log.error(`[${label}] Failed to render: ${e.message}`);
+            if (e instanceof Error) {
+              this.log.error(`[${label}] Failed to render: ${e.message}`);
+            }
           }
 
           if (image) {
@@ -222,7 +230,9 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
             try {
               await device.push(image, id);
             } catch (error) {
-              this.log.error(`[${label}] Failed to push ${id}: ${error.message}`);
+              if (error instanceof Error) {
+                this.log.error(`[${label}] Failed to push ${id}: ${error.message}`);
+              }
             }
           }
         };
@@ -317,7 +327,9 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
           this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
         }
       } catch (e) { 
-        this.log.error(`Failed to update ${id}: ${e.stack}`);
+        if (e instanceof Error){
+          this.log.error(`Failed to update ${id}: ${e.stack}`);
+        }
       }
     }
 
