@@ -74,6 +74,10 @@ And the final result on the Tidbyt:
 
 #### More apps to try!
 
+* [XBOX Gamerscore](https://github.com/drudge/homebridge-tidbyt/wiki/Creating-an-XBOX-Live-Gamerscore-Custom-App) by drudge
+
+  ![](https://camo.githubusercontent.com/5808c238cde39c32ce18af4cfebead62617c4b0387c870bbfdc687052db857e3/68747470733a2f2f70656e722e65652f6473456141582f78626f782d6c6976652e676966)
+
 * [Pacman Clock](https://github.com/savetz/tidbyt-sprite-demo#pac-man-clock) by savetz
 
   ![](https://github.com/savetz/tidbyt-sprite-demo/raw/main/pacmandemo.gif)
