@@ -206,7 +206,7 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
         }
         
         let first = true;
-        const invoke = async (background = pushToBackround) => {
+        const invoke = async (background) => {
           if (!first) {
             this.log.info(`[${label}] Refreshing app`);
           }
@@ -227,7 +227,7 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
           }
 
           if (image) {
-            this.log.info(`[${label}] Pushing to device`);
+            this.log.info(`[${label}] Pushing to device${background ? ' in background' : ''}`);
             try {
               await device.push(image, {
                 installationID: id, 
@@ -244,7 +244,7 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
         // schedule using a cron expression if we have one
         if (schedule) {
           this.log.info(`[${label}] Schedule: ${schedule}`);
-          scheduler.scheduleJob(schedule, invoke);
+          scheduler.scheduleJob(schedule, async () => invoke(pushToBackround));
         }
 
         // invoke immediately
