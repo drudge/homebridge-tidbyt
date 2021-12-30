@@ -25,7 +25,7 @@ So far the integration is fairly limited. The device will show up on your networ
 > **Note:** Due to Tidbyt API limitations it is not possible to turn the screen completely off at this time. I will add support for turning the device on/off as soon as it is possible to do so.
 ### Custom Apps
 
-Using Custom Apps, you can configure your very own applets using Pixlet scripts.
+Using Custom Apps, you can configure [your very own applets](https://github.com/drudge/homebridge-tidbyt/wiki/Custom-App-Registry) using Pixlet scripts.
 
 You can schedule your applets to update and push to all of your devices at the same time to keep them updated.
 
