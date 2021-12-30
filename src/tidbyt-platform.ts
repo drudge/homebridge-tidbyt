@@ -164,6 +164,7 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
           config = [],
           schedule,
           updateOnStartup = true,
+          pushToBackround = false,
           configScript,
         } = customApp;
         const label = id || '-transient-';
@@ -205,7 +206,7 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
         }
         
         let first = true;
-        const invoke = async () => {
+        const invoke = async (background = pushToBackround) => {
           if (!first) {
             this.log.info(`[${label}] Refreshing app`);
           }
@@ -228,7 +229,10 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
           if (image) {
             this.log.info(`[${label}] Pushing to device`);
             try {
-              await device.push(image, id);
+              await device.push(image, {
+                installationID: id, 
+                background: id ? background : false,
+              });
             } catch (error) {
               if (error instanceof Error) {
                 this.log.error(`[${label}] Failed to push ${id}: ${error.message}`);
@@ -245,7 +249,7 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
 
         // invoke immediately
         if (updateOnStartup) {
-          await invoke();
+          await invoke(true);
         }
       }
     }

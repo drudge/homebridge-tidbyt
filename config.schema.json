@@ -46,6 +46,10 @@
               "type": "boolean",
               "default": true
             },
+            "pushToBackround": {
+              "type": "boolean",
+              "default": false
+            },
             "script": {
               "type": "string",
               "required": true
@@ -158,6 +162,13 @@
                   "default": true,
                   "flex": "1 1 100%",
                   "description": "When enabled, the applet will be pushed to the device using the Cron schedule or on startup if configured below.\nIf disabled, any installations will be removed from the rotation and the app will not run."
+                },
+                {
+                  "key": "customApps[].pushToBackround",
+                  "title": "Push To Background",
+                  "default": false,
+                  "flex": "1 1 100%",
+                  "description": "When enabled, the applet will be updated but won't immediately display on the device. Transient applets will always interrupt the rotation."
                 },
                 {
                   "key": "customApps[].updateOnStartup",
