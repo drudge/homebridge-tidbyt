@@ -8,7 +8,7 @@
 
 # Tidbyt Platform Plugin [![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
 
-This is a Homebridge plugin that adds HomeKit support to Tidbyt devices.
+This is a Homebridge plugin that adds HomeKit support to Tidbyt devices. Built with [node-tidbyt](https://github.com/drudge/node-tidbyt).
 
 **This project is not endorsed or sponsored by Tidbyt Inc. and is for educational purposes only.**
 
