@@ -68,14 +68,17 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
       return;
     }
 
-    const { authToken } = config;
+    const { managedDevices = [] } = config;
 
-    if (!authToken) {
-      this.log.warn(`No auth token configured. For configuration instructions, visit https://github.com/drudge/${PLUGIN_NAME}.`);
+    if (!managedDevices.length) {
+      this.log.warn(`No devices configured. For configuration instructions, visit https://github.com/drudge/${PLUGIN_NAME}.`);
       return;
     }
 
-    this.tidbyt = new Tidbyt(authToken);
+    if (!managedDevices.every(device => typeof device.authToken === 'string')) {
+      this.log.warn(`Auth token is required for all devices. See: https://github.com/drudge/${PLUGIN_NAME}.`);
+      return;
+    }
 
     this.log.debug('Finished initializing platform:', PLATFORM_NAME);
     this.api.on('didFinishLaunching', this.init.bind(this));
@@ -149,85 +152,103 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
     }
   }
 
+  async removeAppInstallation(customApp) {
+    const { id } = customApp;
+    const managedDevices = this.config.managedDevices || [];
+    const label = id || '-transient-';
+
+    if (managedDevices.length) {
+      this.log.debug(`[${label}] is disabled, attempting to remove any active installations`);
+
+      for (const { id: deviceId, authToken } of managedDevices) {
+        const tidbyt = new Tidbyt(authToken);
+        const device = await tidbyt.devices.get(deviceId);
+        this.log.info(`[${label}] Removing installation from ${device.displayName}`);
+
+        await updateLimiter.schedule(async () => {
+          try {
+            await device.installations.delete(id);
+          } catch (e) {
+            if (e instanceof Error && !e.message.includes('installation not found')) {
+              this.log.error(`[${label}] Failed to remove installation ${id} from ${device.displayName}: ${e.message}`);
+            }
+          }
+        });
+      }
+    }
+  }
+
   async handleCustomApps() {
     const managedDevices = this.config.managedDevices || [];
 
-    for (const managedDevice of managedDevices) {
-      const device = await this.tidbyt.devices.get(managedDevice.id);
-      const customApps = this.config.customApps || [];
+    const customApps = this.config.customApps || [];
 
-      for (const customApp of customApps) {
-        const {
-          id,
-          enabled = false,
-          script,
-          config = [],
-          schedule,
-          updateOnStartup = true,
-          pushToBackround = false,
-          configScript,
-        } = customApp;
-        const label = id || '-transient-';
+    for (const customApp of customApps) {
+      const {
+        id,
+        enabled = false,
+        script,
+        config = [],
+        schedule,
+        updateOnStartup = true,
+        pushToBackround = false,
+        configScript,
+      } = customApp;
+      const label = id || '-transient-';
 
-        this.log.info(`[${label}] Initializing app${!id ? `: ${script}` : ''}`);
+      this.log.info(`[${label}] Initializing app${!id ? `: ${script}` : ''}`);
 
-        if (!enabled) {
-          this.log.debug(`[${label}] is disabled, attempting to remove any active installations`);
-          await updateLimiter.schedule(async () => {
-            try {
-              await device.installations.delete(id);
-            } catch (e) {
-              if (e instanceof Error && !e.message.includes('installation not found')) {
-                this.log.error(`Failed to remove installation ${id}: ${e.message}`);
-              }
-            }
-          });
-          continue;
+      if (!enabled) {
+        this.removeAppInstallation(customApp);
+        continue;
+      }
+
+      let fetch;
+      let configScriptLoaded = false;
+
+      if (configScript) {
+        try {
+          this.log.info(`[${label}] Config Script: ${configScript}`);
+          fetch = require(configScript);
+          configScriptLoaded = true;
+        } catch (error) {
+          if (error instanceof Error) {
+            this.log.error(`Failed to load dynamic config script: ${error.message}`);
+          }
         }
+      }
 
-        let fetch;
-        let configScriptLoaded = false;
-
-        if (configScript) {
-          try {
-            this.log.info(`[${label}] Config Script: ${configScript}`);
-            fetch = require(configScript);
-            configScriptLoaded = true;
-          } catch (error) {
-            if (error instanceof Error) {
-              this.log.error(`Failed to load dynamic config script: ${error.message}`);
-            }
+      if (!fetch) {
+        fetch = async () => config;
+        configScriptLoaded = false;
+      }
+      
+      let first = true;
+      const invoke = async (background) => {
+        if (!first) {
+          this.log.info(`[${label}] Refreshing app`);
+        }
+        first = false;
+        this.log.debug(`[${label}] Fetching...`);
+        let image;
+        try {
+          if (configScriptLoaded) {
+            this.log.debug(`[${label}] Fetching config via ${configScript}...`);
+          }
+          customApp.config = await fetch(config);
+          this.log.info(`[${label}] Rendering: ${script} ${customApp.config.map(({key, value}) => `${key}=${value}`).join(' ')}`);
+          image = await this.renderPixlet(script, customApp.config);
+        } catch (e) {
+          if (e instanceof Error) {
+            this.log.error(`[${label}] Failed to render: ${e.message}`);
           }
         }
 
-        if (!fetch) {
-          fetch = async () => config;
-          configScriptLoaded = false;
-        }
-        
-        let first = true;
-        const invoke = async (background) => {
-          if (!first) {
-            this.log.info(`[${label}] Refreshing app`);
-          }
-          first = false;
-          this.log.debug(`[${label}] Fetching...`);
-          let image;
-          try {
-            if (configScriptLoaded) {
-              this.log.debug(`[${label}] Fetching config via ${configScript}...`);
-            }
-            customApp.config = await fetch(config);
-            this.log.info(`[${label}] Rendering: ${script} ${customApp.config.map(({key, value}) => `${key}=${value}`).join(' ')}`);
-            image = await this.renderPixlet(script, customApp.config);
-          } catch (e) {
-            if (e instanceof Error) {
-              this.log.error(`[${label}] Failed to render: ${e.message}`);
-            }
-          }
-
-          if (image) {
-            this.log.info(`[${label}] Pushing to device${background ? ' in background' : ''}`);
+        if (image) {
+          for (const { id: deviceId, authToken } of managedDevices) {
+            const tidbyt = new Tidbyt(authToken);
+            const device = await tidbyt.devices.get(deviceId);
+            this.log.info(`[${label}] Pushing to ${device.displayName}${background ? ' in background' : ''}`);
             try {
               await device.push(image, {
                 installationID: id, 
@@ -239,18 +260,18 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
               }
             }
           }
-        };
-
-        // schedule using a cron expression if we have one
-        if (schedule) {
-          this.log.info(`[${label}] Schedule: ${schedule}`);
-          scheduler.scheduleJob(schedule, async () => invoke(pushToBackround));
         }
+      };
 
-        // invoke immediately
-        if (updateOnStartup) {
-          await invoke(true);
-        }
+      // schedule using a cron expression if we have one
+      if (schedule) {
+        this.log.info(`[${label}] Schedule: ${schedule}`);
+        scheduler.scheduleJob(schedule, async () => invoke(pushToBackround));
+      }
+
+      // invoke immediately
+      if (updateOnStartup) {
+        await invoke(true);
       }
     }
   }
@@ -299,13 +320,19 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
 
     const managedDevices = this.config.managedDevices || [];
 
-    for (const { id } of managedDevices) {
+    for (const { id, authToken } of managedDevices) {
+      if (!authToken) {
+        this.log.warn(`No auth token configured for device ${id}. See: https://github.com/drudge/${PLUGIN_NAME}.`);
+        continue;
+      }
+
       const uuid = this.api.hap.uuid.generate(id);
 
       this.log.debug('UUID: %s - Device: %j', uuid, id);
 
       try {
-        const tidbytDevice = await this.tidbyt.devices.get(id);
+        const tidbyt = new Tidbyt(authToken);
+        const tidbytDevice = await tidbyt.devices.get(id);
         const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
         let accessory = existingAccessory;
         let handler = this.handlers.get(uuid);

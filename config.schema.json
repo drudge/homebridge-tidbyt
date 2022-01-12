@@ -6,11 +6,6 @@
   "schema": {
     "type": "object",
     "properties": {
-      "authToken": {
-        "title": "Auth Token",
-        "type": "string",
-        "required": true
-      },
       "discoverFrequency": {
         "title": "Update Frequency (ms)",
         "type": "number",
@@ -23,6 +18,11 @@
           "type": "object",
           "properties": {
             "id": {
+              "type": "string",
+              "required": true
+            },
+            "authToken": {
+              "title": "Auth Token",
               "type": "string",
               "required": true
             }
@@ -86,10 +86,6 @@
       "notitle": true,
       "items": [
         {
-          "title": "Auth Token",
-          "key": "authToken"
-        },
-        {
           "title": "Discover Frequency (ms)",
           "key": "discoverFrequency"
         }
@@ -114,6 +110,10 @@
                   "key": "managedDevices[].id",
                   "title": "Device ID",
                   "default": "snarky-device-id-here"
+                },
+                {
+                  "title": "Auth Token",
+                  "key": "managedDevices[].authToken"
                 }
               ]
             }
