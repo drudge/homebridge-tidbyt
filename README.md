@@ -41,11 +41,11 @@ This can also be configured manually in the config.json like this:
     "platforms": [
         ...
         {
-            "authToken": "...",
             "discoverFrequency": 60000,
             "managedDevices": [
                 {
-                    "id": "mainly-awesome-viking-rabbit-2e1"
+                    "id": "mainly-awesome-viking-rabbit-2e1",
+                    "authToken": "..."
                 }
             ],
             "customApps": [
