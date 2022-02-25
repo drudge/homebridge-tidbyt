@@ -178,100 +178,112 @@ export class TidbytPlatform implements DynamicPlatformPlugin {
     }
   }
 
-  async handleCustomApps() {
-    const managedDevices = this.config.managedDevices || [];
+  async handleCustomApp(customApp, devices) {
+    const {
+      id,
+      enabled = false,
+      script,
+      config = [],
+      schedule,
+      updateOnStartup = true,
+      pushToBackround = false,
+      configScript,
+    } = customApp;
+    const label = id || '-transient-';
 
-    const customApps = this.config.customApps || [];
+    this.log.info(`[${label}] Initializing app${!id ? `: ${script}` : ''}`);
 
-    for (const customApp of customApps) {
-      const {
-        id,
-        enabled = false,
-        script,
-        config = [],
-        schedule,
-        updateOnStartup = true,
-        pushToBackround = false,
-        configScript,
-      } = customApp;
-      const label = id || '-transient-';
+    if (!enabled) {
+      await this.removeAppInstallation(customApp);
+      return;
+    }
 
-      this.log.info(`[${label}] Initializing app${!id ? `: ${script}` : ''}`);
+    let fetch;
+    let configScriptLoaded = false;
 
-      if (!enabled) {
-        this.removeAppInstallation(customApp);
-        continue;
+    if (configScript) {
+      try {
+        this.log.info(`[${label}] Config Script: ${configScript}`);
+        fetch = require(configScript);
+        configScriptLoaded = true;
+      } catch (error) {
+        if (error instanceof Error) {
+          this.log.error(`Failed to load dynamic config script: ${error.message}`);
+        }
       }
+    }
 
-      let fetch;
-      let configScriptLoaded = false;
-
-      if (configScript) {
-        try {
-          this.log.info(`[${label}] Config Script: ${configScript}`);
-          fetch = require(configScript);
-          configScriptLoaded = true;
-        } catch (error) {
-          if (error instanceof Error) {
-            this.log.error(`Failed to load dynamic config script: ${error.message}`);
-          }
+    if (!fetch) {
+      fetch = async () => config;
+      configScriptLoaded = false;
+    }
+    
+    let first = true;
+    const invoke = async (background) => {
+      if (!first) {
+        this.log.info(`[${label}] Refreshing app`);
+      }
+      first = false;
+      this.log.debug(`[${label}] Fetching...`);
+      let image;
+      try {
+        if (configScriptLoaded) {
+          this.log.debug(`[${label}] Fetching config via ${configScript}...`);
+        }
+        customApp.config = await fetch(config);
+        this.log.info(`[${label}] Rendering: ${script} ${customApp.config.map(({key, value}) => `${key}=${value}`).join(' ')}`);
+        image = await this.renderPixlet(script, customApp.config);
+      } catch (e) {
+        if (e instanceof Error) {
+          this.log.error(`[${label}] Failed to render: ${e.message}`);
         }
       }
 
-      if (!fetch) {
-        fetch = async () => config;
-        configScriptLoaded = false;
-      }
-      
-      let first = true;
-      const invoke = async (background) => {
-        if (!first) {
-          this.log.info(`[${label}] Refreshing app`);
-        }
-        first = false;
-        this.log.debug(`[${label}] Fetching...`);
-        let image;
-        try {
-          if (configScriptLoaded) {
-            this.log.debug(`[${label}] Fetching config via ${configScript}...`);
-          }
-          customApp.config = await fetch(config);
-          this.log.info(`[${label}] Rendering: ${script} ${customApp.config.map(({key, value}) => `${key}=${value}`).join(' ')}`);
-          image = await this.renderPixlet(script, customApp.config);
-        } catch (e) {
-          if (e instanceof Error) {
-            this.log.error(`[${label}] Failed to render: ${e.message}`);
-          }
-        }
-
-        if (image) {
-          for (const { id: deviceId, authToken } of managedDevices) {
-            const tidbyt = new Tidbyt(authToken);
-            const device = await tidbyt.devices.get(deviceId);
-            this.log.info(`[${label}] Pushing to ${device.displayName}${background ? ' in background' : ''}`);
-            try {
-              await device.push(image, {
-                installationID: id, 
-                background: id ? background : false,
-              });
-            } catch (error) {
-              if (error instanceof Error) {
-                this.log.error(`[${label}] Failed to push ${id}: ${error.message}`);
-              }
+      if (image) {
+        for (const { id: deviceId, authToken } of devices) {
+          const tidbyt = new Tidbyt(authToken);
+          const device = await tidbyt.devices.get(deviceId);
+          this.log.info(`[${label}] Pushing to ${device.displayName}${background ? ' in background' : ''}`);
+          try {
+            await device.push(image, {
+              installationID: id, 
+              background: id ? background : false,
+            });
+          } catch (error) {
+            if (error instanceof Error) {
+              this.log.error(`[${label}] Failed to push ${id}: ${error.message}`);
             }
           }
         }
-      };
-
-      // schedule using a cron expression if we have one
-      if (schedule) {
-        this.log.info(`[${label}] Schedule: ${schedule}`);
-        scheduler.scheduleJob(schedule, async () => invoke(pushToBackround));
       }
+    };
 
-      // invoke immediately
-      if (updateOnStartup) {
-        await invoke(true);
+    // schedule using a cron expression if we have one
+    if (schedule) {
+      this.log.info(`[${label}] Schedule: ${schedule}`);
+      scheduler.scheduleJob(schedule, async () => invoke(pushToBackround));
+    }
+
+    // invoke immediately
+    if (updateOnStartup) {
+      await invoke(true);
+    }
+  }
+
+  async handleCustomApps() {
+    const managedDevices = this.config.managedDevices || [];
+    const globalCustomApps = this.config.customApps || [];
+
+    // Handle global custom apps first
+    for (const customApp of globalCustomApps) {
+      await this.handleCustomApp(customApp, managedDevices);
+    }
+
+    // Then handle per-device custom apps
+    for (const managedDevice of managedDevices) {
+      const perDeviceApps = managedDevice.customApps || [];
+      for (const customApp of perDeviceApps) {
+        await this.handleCustomApp(customApp, [ managedDevice ]);
       }
     }
   }

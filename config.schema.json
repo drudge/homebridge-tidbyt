@@ -25,6 +25,55 @@
               "title": "Auth Token",
               "type": "string",
               "required": true
+            },
+            "customApps": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": true
+                  },
+                  "updateOnStartup": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "pushToBackround": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "script": {
+                    "type": "string",
+                    "required": true
+                  },
+                  "schedule": {
+                    "type": "string"
+                  },
+                  "configScript": {
+                    "type": "string"
+                  },
+                  "config": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "required": true
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -114,6 +163,104 @@
                 {
                   "title": "Auth Token",
                   "key": "managedDevices[].authToken"
+                },
+                {
+                  "type": "fieldset",
+                  "title": "Custom Apps",
+                  "expandable": true,
+                  "expanded": false,
+                  "items": [
+                    {
+                      "key": "customApps",
+                      "title": "App",
+                      "type": "array",
+                      "description": "Pushing an applet to your Tidbyt without an installation ID treats your applet as transient. Transient applets are not added to the rotation and will only be displayed a single time.",
+                      "notitle": true,
+                      "items": [
+                        {
+                          "title": "App",
+                          "type": "div",
+                          "notitle": true,
+                          "flex-flow": "row wrap",
+                          "items": [
+                            {
+                              "key": "managedDevices[].customApps[].id",
+                              "title": "Installation ID",
+                              "description": "If you would like your applet to continously display as part of the rotation, set an installation ID here. Must be unique. If left blank, the applet will be treated as transient.",
+                              "flex": "1 1 50%"
+                            },
+                            {
+                              "key": "managedDevices[].customApps[].schedule",
+                              "title": "Cron Schedule",
+                              "flex": "1 1 50%"
+                            },
+                            {
+                              "key": "managedDevices[].customApps[].script",
+                              "title": "Render Script (.star)",
+                              "flex": "1 1 100%"
+                            },
+                            {
+                              "key": "managedDevices[].customApps[].enabled",
+                              "title": "Enabled",
+                              "default": true,
+                              "flex": "1 1 100%",
+                              "description": "When enabled, the applet will be pushed to the device using the Cron schedule or on startup if configured below.\nIf disabled, any installations will be removed from the rotation and the app will not run."
+                            },
+                            {
+                              "key": "managedDevices[].customApps[].pushToBackround",
+                              "title": "Push To Background",
+                              "default": false,
+                              "flex": "1 1 100%",
+                              "description": "When enabled, the applet will be updated but won't immediately display on the device. Transient applets will always interrupt the rotation."
+                            },
+                            {
+                              "key": "managedDevices[].customApps[].updateOnStartup",
+                              "title": "Refresh on Startup",
+                              "default": true,
+                              "flex": "1 1 100%",
+                              "description": "When enabled, the applet will be refreshed and pushed to your Tidbyt immediately upon Homebridge startup."
+                            },
+                            {
+                              "key": "managedDevices[].customApps[].configScript",
+                              "title": "Config Script (.js)",
+                              "flex": "1 1 100%",
+                              "description": "Config scripts allow you to fetch configuration values for your scripts using Node.js modules. When the applet is rendered, the config values will be fetched using the promise returned by the module specified here."
+                            },
+                            {
+                              "type": "section",
+                              "title": "Config",
+                              "expandable": true,
+                              "expanded": false,
+                              "items": [
+                                {
+                                  "title": "Parameter",
+                                  "type": "array",
+                                  "notitle": true,
+                                  "description": "Any configuration parameters will be passed to the pixlet render command.",
+                                  "items": [
+                                    {
+                                      "type": "flex",
+                                      "flex-flow": "row wrap",
+                                      "items": [
+                                        {
+                                          "key": "managedDevices[].customApps[].config[].key",
+                                          "title": "Key"
+                                        },
+                                        {
+                                          "key": "managedDevices[].customApps[].config[].value",
+                                          "title": "Value"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
                 }
               ]
             }
