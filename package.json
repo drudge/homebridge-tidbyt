@@ -1,7 +1,7 @@
 {
   "name": "homebridge-tidbyt",
   "displayName": "Tidbyt",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Homebridge plugin that adds support for Tidbyt devices.",
   "license": "Apache-2.0",
   "author": {
@@ -17,7 +17,7 @@
     "url": "https://github.com/drudge/homebridge-tidbyt/issues"
   },
   "engines": {
-    "node": ">=12.0.0",
+    "node": ">=14.0.0",
     "homebridge": ">=1.3.0"
   },
   "main": "dist/index.js",
